@@ -3,16 +3,16 @@
 
 LOG="/tmp/monitor.log"
 ERRORLOG="/tmp/monitor.error.log"
-PROCESS="./push2solr4put2archive.bash"
+PROCESS="bash push2solr4put2archive.bash"
 
-echo "$(date) $0: starting $1"
-echo "$(date) $0:files $(ls $1| wc -l)"
+echo "$(date) $0: starting $1" >>$LOG
+echo "$(date) $0:files $(ls $1| wc -l)" >>$LOG
 while read line
 do
     echo "$line" | grep "meta\.json"| while read meta
     do
       dir=$(echo $meta| cut -f1 -d" ")
-      echo "$(date) $0: launcing $meta"
-      $PROCESS "$dir" &
+      echo "$(date) $0: launcing $meta" >>$LOG
+      $PROCESS "$dir" >>$LOG 2>>$ERRORLOG &
     done
 done < <(inotifywait -mr -e close_write "$1")
