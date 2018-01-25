@@ -1,7 +1,6 @@
 #!/bin/bash
-# 1 push 2 solr
-# 2 check subscriptions
-# 3 move 2 archive
+# push 2 solr
+# move 2 archive
 # param $1 directory to process
 
 SOLR=""
@@ -18,18 +17,15 @@ cd $1
 tmp=$(mktemp -d)
 ls | grep -v meta.json | while read f; do
   md5=$(md5sum "$f"| cut -f1 -d" ")
+  #TODO query solr first for md5
   # copy file and meta to tmp dir
   mkdir $tmp/$md5
   mv "$f" $tmp/$md5/
   cp meta.json $tmp/$md5/
   cd $tmp/$md5
-  # push 2 solr
-  # TODO query solr first for md5
+  # index file
   etl-file $(pwd) |& while read m; do log $m; done
-  # check subscriptions
-  # cat /var/spool/oss-mini/subscriptions/*/subscriptions.json | jq .fields.strings
-
-  # move 2 archive
+  # pack it up
   TMP=$(mktemp)
   # TODO if exists $ARCHIVEDIR/$md5.tar.xz
   tar -cv * | xz -9v -e > $ARCHIVEDIR/$md5.tar.xz 2> $TMP

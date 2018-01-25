@@ -39,7 +39,9 @@ import axios from 'axios'
                   if (res.data) {
                     try {
                       let fd = res.data
+                      console.dir(fd)
                       that.stringsList = fd.fields.strings.split(',')
+                      console.dir(that.stringsList)
                     } catch (err) {
                       console.error(err);
                       that.$snackbar.open('contact your admin: subscriptions error '+err.message)
@@ -64,7 +66,7 @@ import axios from 'axios'
                   console.log('subscriptions updated',strings.join(","))
                   if (res.data ) {
                     console.log('subcribe','server returned:',res.data)
-                    that.$toast.open('server returned:'+ res.data)
+                    that.$toast.open('server returned:',res.data)
                   }
                 })
                 .catch(function (err) {
@@ -72,7 +74,7 @@ import axios from 'axios'
                   that.$snackbar.open('contact your admin:'+err.message)
 
                 })
-                .then(function() {
+                .finally(function() {
                   console.log('end subscribe update')
                   that.stringsList = []
                   loadingComponent.close()
