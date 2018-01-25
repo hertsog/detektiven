@@ -138,12 +138,7 @@ let server = http.createServer(basic, (req, res) => {
   // api queries proxied to target
   if (req.url.startsWith(apiUrl)) {
 		console.log('proxy',Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers['user-agent']))
-
-    if (users[req.user]['fp']) {
-      proxy.web(req, res);
-    } else {
-			console.error('notice user do not have fingerprint',req.user,req.socket.remoteAddress)
-		}
+      proxy.web(req.setTimeout(600000), res);
   } else {
     console.log('query',Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers))
     // get to / with params .. obscurity
