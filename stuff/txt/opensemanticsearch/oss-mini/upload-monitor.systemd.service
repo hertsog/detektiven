@@ -1,8 +1,6 @@
 [Unit]
 Description=upload directory monitor
 After=network.target
-# comment out if tika or solr are on another box
-Requires=tika.service solr.service
 
 [Service]
 Type=simple
