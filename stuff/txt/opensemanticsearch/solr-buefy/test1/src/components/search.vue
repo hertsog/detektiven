@@ -1,6 +1,6 @@
 <template>
     <section>
-      <b-field grouped class="is-fullwidth">
+      <b-field grouped style='width:90%;'>
           &nbsp;
           <b-collapse :open="false">
             <button class="button is-primary" slot="trigger">
@@ -44,26 +44,13 @@
                     {{ isAndOr }}
           </b-switch>
           &nbsp;
-          <b-input grouped placeholder="Search..."
+          <b-input grouped placeholder="Search..." style='width:90%;'
               v-model="userQuery"
               @keyup.native.enter = "test()"
-              class="is-expanded"
+              type="search"
               icon="magnify">
           </b-input>
-
-          <b-upload v-model="files">
-    <a class="button is-primary">
-        <b-icon icon="upload"></b-icon>
-    </a>
-</b-upload>
-<div v-if="files && files.length">
-    <span class="file-name">
-        {{ files[0].name }}
-    </span>
-</div>
-
           &nbsp;
-
           <b-collapse :open="false">
             <button class="button is-primary" slot="trigger">
               <b-icon icon="help"></b-icon></button>
@@ -90,7 +77,7 @@
             :nodes="currentNodes"
             :links="currentLinks"
             :loading="loading"
-            hoverable
+
             detailed
             detail-key="id"
 
