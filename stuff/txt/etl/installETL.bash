@@ -59,9 +59,7 @@ cp -r /tmp/detektiven-master/stuff/txt/opensemanticsearch/oss-mini .
 cd oss-mini
 chmod +x monitor.bash
 chmod +x push2solr4put2archive.bash
-cp upload-monitor.systemd.service /lib/systemd/system/
-systemctl enable upload-monitor.systemd.service
-systemctl start upload-monitor.systemd.service
+/lib/systemd/system
 npm install --unsafe-perm >> /vagrant/provision.log 2>&1
 mkdir -p /var/spool/oss-mini
 cd /tmp/detektiven-master/stuff/txt/opensemanticsearch/solr-buefy/test2
