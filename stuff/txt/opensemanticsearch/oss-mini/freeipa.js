@@ -61,7 +61,7 @@ Client.prototype.search = function (base, options, controls) {
   });
 };
 
-exports.getUser = async function (server='127.0.0.1', base='cn=accounts,dc=example,dc=org', binduser='readonly', bindpass='password', uid='employeeNumber==test', pass='passwd',group='chat'){
+exports.getUser = async function (server='127.0.0.1', base='cn=accounts,dc=example,dc=org', binduser='readonly', bindpass='password', uid='employeeNumber==test', pass='passwd',group='sops'){
     let client = new Client({url: 'ldaps://'+server});
     let bindid = 'uid='+binduser+',cn=users,'+base;
     return new Promise(function (resolve, reject) {
