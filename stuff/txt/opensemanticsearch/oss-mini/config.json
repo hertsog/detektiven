@@ -11,5 +11,5 @@
   "ipaBase": "cn=accounts,dc=example,dc=org",
   "ipaPass": "kalakala",
   "ipaUser": "webeid",
-  "ipaGroup": "chat"
+  "ipaGroup": "sops"
 }
