@@ -138,7 +138,7 @@ let server = http.createServer(basic, (req, res) => {
   // api queries proxied to target
   if (req.url.startsWith(apiUrl)) {
 		console.log('proxy',Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers['user-agent']))
-      proxy.web(req.setTimeout(600000), res);
+      proxy.web(req.setTimeout(3600000), res);
   } else {
     console.log('query',Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers))
     // get to / with params .. obscurity
