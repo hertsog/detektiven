@@ -139,12 +139,12 @@ proxy.on('proxyRes', function (proxyRes, req, res) {
 		// TODO find where headers are sent before this and set content to undefined
 		proxyRes.statusCode = 418
     // console.error('proxy', proxyRes.statusMessage, req.socket.remoteAddress, req.user, req.url)
-		log.error('proxy' + logger.joinParams(proxyRes.statusMessage,req.socket.remoteAddress,req.user,req.url))
+		log.error('proxy ' + logger.joinParams(proxyRes.statusMessage,req.socket.remoteAddress,req.user,req.url))
 	}
 });
 proxy.on('error', function (err, req, res) {
   // console.error('proxy ERROR', Date.now(), err)
-  log.error('proxy ERROR' + logger.joinParams(Date.now(),err))
+  log.error('proxy ERROR ' + logger.joinParams(Date.now(),err))
   res.writeHead(418, {
     'Content-Type': 'text/plain'
   });
@@ -183,7 +183,7 @@ let server = http.createServer(basic, (req, res) => {
         }
         res.end()
         // console.log('got user', req.user, 'new params', params.join(','), 'all', JSON.stringify(users[req.user]))
-        log.info('got user' + logger.joinParams( req.user,'new params',params.join(','),'all',JSON.stringify(users[req.user])))
+        log.info('got user ' + logger.joinParams( req.user,'new params',params.join(','),'all',JSON.stringify(users[req.user])))
         mailer.send('kala@kala.na', 'subject', 'body', smtpfrom, smtphost, smtpport)
     } else {
       // static files
@@ -191,7 +191,7 @@ let server = http.createServer(basic, (req, res) => {
         const parsedUrl = url.parse(req.url)
         let pathname = `${staticDir}${parsedUrl.pathname}`;
         // console.log('static:', pathname, ';')
-        log.info('static:' + pathname + ';')
+        log.info('static: ' + pathname + ';')
         const mimeType = {
                         '.ico': 'image/x-icon',
                         '.html': 'text/html',
@@ -218,7 +218,7 @@ let server = http.createServer(basic, (req, res) => {
           fs.readFile(pathname, function(err, data){
             if(err){
               // console.error('error reading file', pathname, Date.now(), req.socket.remoteAddress, req.user, req.url)
-							log.error('error reading file' + logger.joinParams(pathname,Date.now(),req.socket.remoteAddress,req.user,req.url))
+							log.error('error reading file ' + logger.joinParams(pathname,Date.now(),req.socket.remoteAddress,req.user,req.url))
               res.statusCode = 500
               res.end('Something went wrong')
             } else {
@@ -231,7 +231,7 @@ let server = http.createServer(basic, (req, res) => {
       } else {
 
           // console.error('should never happen!', Date.now(), req.socket.remoteAddress, req.user, req.url)
-					log.error('should never happen!' + logger.joinParams(Date.now(),req.socket.remoteAddress,req.user,req.url))
+					log.error('should never happen! ' + logger.joinParams(Date.now(),req.socket.remoteAddress,req.user,req.url))
           res.writeHead(302, {
                 "Location": "/index.html"
           });
