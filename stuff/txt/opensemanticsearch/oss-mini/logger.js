@@ -1,6 +1,6 @@
 const winston = require("winston");
 require('winston-daily-rotate-file');
-const { combine, timestamp, printf } = winston.format;
+const { combine, timestamp, printf, splat } = winston.format;
 
 
 exports.create = function (filepath) {
@@ -10,6 +10,7 @@ exports.create = function (filepath) {
 
   const logger = winston.createLogger({
     format: combine(
+      splat(),
       timestamp(),
       myFormat
     ),
