@@ -61,7 +61,7 @@ const log = logger.create(logFile);
 //done with config
 //logging this to both stdout and files
 console.log('starting with:',ipListen,portListen,staticDir,portTarget,apiUrl,smtphost,smtpport,smtpfrom)
-log.info('starting with:', ipListen, portListen, staticDir, portTarget, apiUrl, smtphost, smtpport, smtpfrom)
+log.info('starting with: ' + logger.joinParams(ipListen, portListen, staticDir, portTarget, apiUrl, smtphost, smtpport, smtpfrom))
 
 // authentication
 let users = {} //TODO load users history
@@ -84,7 +84,7 @@ let basic = auth.basic({
 					if (!users[username]) {
 						users[username] = {}
             // console.log('notice user first time login', username)
-            log.info('notice user first time login', username)
+            log.info('notice user first time login ' + username)
 
 					}
 					users[username]['ipa'] = user
@@ -92,12 +92,12 @@ let basic = auth.basic({
 					callback(true);
 				} else {
           // console.error('should not happen, user', username, ' does not match system user', user.uid)
-					log.error('should not happen, user',username,' does not match system user',user.uid)
+					log.error('should not happen, user ' + username + ' does not match system user ' + user.uid)
 					callback(false);
 				}
 			} catch (error) {
         // console.error('auth error for', username, error)
-				log.error('auth error for',username,error)
+				log.error('auth error for ' + username,error)
 				callback(false)
 			}
 		}
@@ -110,7 +110,7 @@ basic.on('success', (result, req) => {
     users[result.user]['lastseen'] = Date.now()
     if (users[result.user]['ip'] && req.socket.remoteAddress != users[result.user]['ip']) {
       // console.log('WARNING! user', req.user, 'has new ip',req.socket.remoteAddress,'old',users[req.user]['ip'])
-      log.info('WARNING! user', req.user, 'has new ip', req.socket.remoteAddress, 'old', users[req.user]['ip'])
+      log.info('WARNING! user ' + req.user + ' has new ip ' + req.socket.remoteAddress + ' old ' + users[req.user]['ip'])
       //TODO send email to user
       //mailer.send(to, subject, body, smtpfrom, smtphost, smtpport)
     }
@@ -139,12 +139,12 @@ proxy.on('proxyRes', function (proxyRes, req, res) {
 		// TODO find where headers are sent before this and set content to undefined
 		proxyRes.statusCode = 418
     // console.error('proxy', proxyRes.statusMessage, req.socket.remoteAddress, req.user, req.url)
-		log.error('proxy',proxyRes.statusMessage,req.socket.remoteAddress,req.user,req.url)
+		log.error('proxy' + logger.joinParams(proxyRes.statusMessage,req.socket.remoteAddress,req.user,req.url))
 	}
 });
 proxy.on('error', function (err, req, res) {
   // console.error('proxy ERROR', Date.now(), err)
-  log.error('proxy ERROR',Date.now(),err)
+  log.error('proxy ERROR' + logger.joinParams(Date.now(),err))
   res.writeHead(418, {
     'Content-Type': 'text/plain'
   });
@@ -156,11 +156,11 @@ let server = http.createServer(basic, (req, res) => {
   // api queries proxied to target
   if (req.url.startsWith(apiUrl)) {
     // console.log('proxy', Date.now(), req.socket.remoteAddress, req.user, req.url, JSON.stringify(req.headers['user-agent']))
-		log.info('proxy',Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers['user-agent']))
+		log.info('proxy ' + logger.joinParams(Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers['user-agent'])))
       proxy.web(req.setTimeout(3600000), res);
   } else {
     // console.log('query', Date.now(), req.socket.remoteAddress, req.user, req.url, JSON.stringify(req.headers))
-    log.info('query',Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers))
+    log.info('query ' + logger.joinParams(Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers)))
     // get to / with params .. obscurity
     if (req.url.startsWith("/?")) {
         const parsedUrl = url.parse(req.url)
@@ -173,7 +173,7 @@ let server = http.createServer(basic, (req, res) => {
               if (users[req.user][key]) {
                 if (users[req.user][key] != value) {
                   // console.log('WARNING! user', req.user, 'has new', key, value, 'old', users[req.user][key])
-                  log.info('WARNING! user', req.user, 'has new',key,value,'old',users[req.user][key])
+                  log.info('WARNING! user ' + req.user + ' has new ' + key,value + ' old ' + users[req.user][key])
                   //TODO send email to user
                 }
               } else {
@@ -183,7 +183,7 @@ let server = http.createServer(basic, (req, res) => {
         }
         res.end()
         // console.log('got user', req.user, 'new params', params.join(','), 'all', JSON.stringify(users[req.user]))
-        log.info('got user',req.user,'new params',params.join(','),'all',JSON.stringify(users[req.user]))
+        log.info('got user' + logger.joinParams( req.user,'new params',params.join(','),'all',JSON.stringify(users[req.user])))
         mailer.send('kala@kala.na', 'subject', 'body', smtpfrom, smtphost, smtpport)
     } else {
       // static files
@@ -191,7 +191,7 @@ let server = http.createServer(basic, (req, res) => {
         const parsedUrl = url.parse(req.url)
         let pathname = `${staticDir}${parsedUrl.pathname}`;
         // console.log('static:', pathname, ';')
-        log.info('static:',pathname,';')
+        log.info('static:' + pathname + ';')
         const mimeType = {
                         '.ico': 'image/x-icon',
                         '.html': 'text/html',
@@ -202,7 +202,7 @@ let server = http.createServer(basic, (req, res) => {
         fs.exists(pathname, function (exist) {
           if(!exist) {
             // console.error('file not exists', Date.now(), req.socket.remoteAddress, req.user, req.url)
-						log.error('file not exists',Date.now(),req.socket.remoteAddress,req.user,req.url)
+						log.error('file not exists ' + logger.joinParams(Date.now(),req.socket.remoteAddress,req.user,req.url))
             res.statusCode = 418
             res.end(`something went wrong`)
             return
@@ -218,7 +218,7 @@ let server = http.createServer(basic, (req, res) => {
           fs.readFile(pathname, function(err, data){
             if(err){
               // console.error('error reading file', pathname, Date.now(), req.socket.remoteAddress, req.user, req.url)
-							log.error('error reading file',pathname,Date.now(),req.socket.remoteAddress,req.user,req.url)
+							log.error('error reading file' + logger.joinParams(pathname,Date.now(),req.socket.remoteAddress,req.user,req.url))
               res.statusCode = 500
               res.end('Something went wrong')
             } else {
@@ -231,7 +231,7 @@ let server = http.createServer(basic, (req, res) => {
       } else {
 
           // console.error('should never happen!', Date.now(), req.socket.remoteAddress, req.user, req.url)
-					log.error('should never happen!',Date.now(),req.socket.remoteAddress,req.user,req.url)
+					log.error('should never happen!' + logger.joinParams(Date.now(),req.socket.remoteAddress,req.user,req.url))
           res.writeHead(302, {
                 "Location": "/index.html"
           });

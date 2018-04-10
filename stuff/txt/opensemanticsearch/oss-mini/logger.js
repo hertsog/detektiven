@@ -21,3 +21,9 @@ exports.create = function (filepath) {
 
   return logger;
 }
+
+exports.joinParams = function(...args) {
+  return args.reduce((prev, cur) => {
+    return prev + ", " + cur;
+  }).trim()
+}
