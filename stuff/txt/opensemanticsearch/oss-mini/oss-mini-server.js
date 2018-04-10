@@ -54,10 +54,9 @@ let binduser = cliParams.ipaUser || config.ipaUser
 let groupName = cliParams.ipaGroup || config.ipaGroup
 let realm = config.realm || 'oss-mini'
 let reauth = config.reauth || 1000 * 60
-let logError = config.logError || '/var/log/oss-mini/error.log'
-let logInfo = config.logInfo || '/var/log/oss-mini/info.log'
+let logFile = config.logFile || '/var/log/oss-mini/oss-mini-%DATE%.log'
 
-const log = logger.create(logError, logInfo);
+const log = logger.create(logFile);
 
 //done with config
 //logging this to both stdout and files

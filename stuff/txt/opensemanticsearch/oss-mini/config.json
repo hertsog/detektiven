@@ -12,6 +12,5 @@
   "ipaPass": "kalakala",
   "ipaUser": "webeid",
   "ipaGroup": "sops",
-  "logError": "/var/log/oss-mini/error.log",
-  "logInfo": "/var/log/oss-mini/info.log"
+  "logFile": "/var/log/oss-mini/error-%DATE%.log"
 }
