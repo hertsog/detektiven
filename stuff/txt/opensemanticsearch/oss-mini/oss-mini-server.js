@@ -9,6 +9,7 @@ const path = require('path')
 const mailer = require('./mailer')
 const cliParams = require('commander');
 const freeipa = require('./freeipa');
+const logger = require('./logger');
 
 cliParams
   .version('0.0.1')
@@ -53,9 +54,14 @@ let binduser = cliParams.ipaUser || config.ipaUser
 let groupName = cliParams.ipaGroup || config.ipaGroup
 let realm = config.realm || 'oss-mini'
 let reauth = config.reauth || 1000 * 60
+let logFile = config.logFile || '/var/log/oss-mini/oss-mini-%DATE%.log'
+
+const log = logger.create(logFile);
 
 //done with config
+//logging this to both stdout and files
 console.log('starting with:',ipListen,portListen,staticDir,portTarget,apiUrl,smtphost,smtpport,smtpfrom)
+log.info('starting with: ' + logger.joinParams(ipListen, portListen, staticDir, portTarget, apiUrl, smtphost, smtpport, smtpfrom))
 
 // authentication
 let users = {} //TODO load users history
@@ -66,7 +72,9 @@ let basic = auth.basic({
 		if (users[username] && users[username]['lastseen'] && (Date.now() - users[username]['lastseen'] < reauth)){
 			 callback(true)
 		} else {
-			console.log('notice start auth for',username)
+      // console.log('notice start auth for',username)
+      log.info('notice start auth for ' + username)
+
 			process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 			//TODO get employeeNumber from header
 			let employeeNumber = 'uid='+username
@@ -75,17 +83,21 @@ let basic = auth.basic({
 				if (username == user.uid) {
 					if (!users[username]) {
 						users[username] = {}
-						console.log('notice user first time login', username)
+            // console.log('notice user first time login', username)
+            log.info('notice user first time login ' + username)
+
 					}
 					users[username]['ipa'] = user
 					users[username]['logintime'] = Date.now()
 					callback(true);
 				} else {
-					console.error('should not happen, user',username,' does not match system user',user.uid)
+          // console.error('should not happen, user', username, ' does not match system user', user.uid)
+					log.error('should not happen, user ' + username + ' does not match system user ' + user.uid)
 					callback(false);
 				}
 			} catch (error) {
-				console.error('auth error for',username,error)
+        // console.error('auth error for', username, error)
+				log.error('auth error for ' + username,error)
 				callback(false)
 			}
 		}
@@ -97,20 +109,24 @@ basic.on('success', (result, req) => {
   } else {
     users[result.user]['lastseen'] = Date.now()
     if (users[result.user]['ip'] && req.socket.remoteAddress != users[result.user]['ip']) {
-      console.log('WARNING! user', req.user, 'has new ip',req.socket.remoteAddress,'old',users[req.user]['ip'])
+      // console.log('WARNING! user', req.user, 'has new ip',req.socket.remoteAddress,'old',users[req.user]['ip'])
+      log.info('WARNING! user ' + req.user + ' has new ip ' + req.socket.remoteAddress + ' old ' + users[req.user]['ip'])
       //TODO send email to user
       //mailer.send(to, subject, body, smtpfrom, smtphost, smtpport)
     }
   }
   let user_online = users[result.user]['lastseen'] - users[result.user]['logintime']
-	console.log(`User ${result.user} authenticated since ${users[result.user]['logintime']} online time ${user_online}`);
+  // console.log(`User ${result.user} authenticated since ${users[result.user]['logintime']} online time ${user_online}`);
+  log.info(`User ${result.user} authenticated since ${users[result.user]['logintime']} online time ${user_online}`);
 });
 basic.on('fail', (result, req) => {
   delete users[result.user]
-	console.log(`User authentication failed: ${req.socket.remoteAddress}`);
+  // console.log(`User authentication failed: ${req.socket.remoteAddress}`);
+	log.info(`User authentication failed: ${req.socket.remoteAddress}`);
 });
 basic.on('error', (error, req) => {
-	console.log(`Authentication error: ${error.code + " - " + error.message}`);
+  // console.log(`Authentication error: ${error.code + " - " + error.message}`);
+	log.info(`Authentication error: ${error.code + " - " + error.message}`);
 });
 
 // api is prxy for solr
@@ -122,11 +138,13 @@ proxy.on('proxyRes', function (proxyRes, req, res) {
 	if (proxyRes.statusCode != 200) {
 		// TODO find where headers are sent before this and set content to undefined
 		proxyRes.statusCode = 418
-		console.error('proxy',proxyRes.statusMessage,req.socket.remoteAddress,req.user,req.url)
+    // console.error('proxy', proxyRes.statusMessage, req.socket.remoteAddress, req.user, req.url)
+		log.error('proxy ' + logger.joinParams(proxyRes.statusMessage,req.socket.remoteAddress,req.user,req.url))
 	}
 });
 proxy.on('error', function (err, req, res) {
-  console.error('proxy ERROR',Date.now(),err)
+  // console.error('proxy ERROR', Date.now(), err)
+  log.error('proxy ERROR ' + logger.joinParams(Date.now(),err))
   res.writeHead(418, {
     'Content-Type': 'text/plain'
   });
@@ -137,10 +155,12 @@ proxy.on('error', function (err, req, res) {
 let server = http.createServer(basic, (req, res) => {
   // api queries proxied to target
   if (req.url.startsWith(apiUrl)) {
-		console.log('proxy',Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers['user-agent']))
+    // console.log('proxy', Date.now(), req.socket.remoteAddress, req.user, req.url, JSON.stringify(req.headers['user-agent']))
+		log.info('proxy ' + logger.joinParams(Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers['user-agent'])))
       proxy.web(req.setTimeout(3600000), res);
   } else {
-    console.log('query',Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers))
+    // console.log('query', Date.now(), req.socket.remoteAddress, req.user, req.url, JSON.stringify(req.headers))
+    log.info('query ' + logger.joinParams(Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers)))
     // get to / with params .. obscurity
     if (req.url.startsWith("/?")) {
         const parsedUrl = url.parse(req.url)
@@ -152,7 +172,8 @@ let server = http.createServer(basic, (req, res) => {
           if (key == 'fp' || key == 'pk') {
               if (users[req.user][key]) {
                 if (users[req.user][key] != value) {
-                  console.log('WARNING! user', req.user, 'has new',key,value,'old',users[req.user][key])
+                  // console.log('WARNING! user', req.user, 'has new', key, value, 'old', users[req.user][key])
+                  log.info('WARNING! user ' + req.user + ' has new ' + key,value + ' old ' + users[req.user][key])
                   //TODO send email to user
                 }
               } else {
@@ -161,14 +182,16 @@ let server = http.createServer(basic, (req, res) => {
           }
         }
         res.end()
-        console.log('got user',req.user,'new params',params.join(','),'all',JSON.stringify(users[req.user]))
+        // console.log('got user', req.user, 'new params', params.join(','), 'all', JSON.stringify(users[req.user]))
+        log.info('got user ' + logger.joinParams( req.user,'new params',params.join(','),'all',JSON.stringify(users[req.user])))
         mailer.send('kala@kala.na', 'subject', 'body', smtpfrom, smtphost, smtpport)
     } else {
       // static files
       if (req.url.startsWith("/")) {
         const parsedUrl = url.parse(req.url)
         let pathname = `${staticDir}${parsedUrl.pathname}`;
-        console.log('static:',pathname,';')
+        // console.log('static:', pathname, ';')
+        log.info('static: ' + pathname + ';')
         const mimeType = {
                         '.ico': 'image/x-icon',
                         '.html': 'text/html',
@@ -178,7 +201,8 @@ let server = http.createServer(basic, (req, res) => {
                         '.png': 'image/png'}
         fs.exists(pathname, function (exist) {
           if(!exist) {
-						console.error('file not exists',Date.now(),req.socket.remoteAddress,req.user,req.url)
+            // console.error('file not exists', Date.now(), req.socket.remoteAddress, req.user, req.url)
+						log.error('file not exists ' + logger.joinParams(Date.now(),req.socket.remoteAddress,req.user,req.url))
             res.statusCode = 418
             res.end(`something went wrong`)
             return
@@ -193,7 +217,8 @@ let server = http.createServer(basic, (req, res) => {
           // read file from file system
           fs.readFile(pathname, function(err, data){
             if(err){
-							console.error('error reading file',pathname,Date.now(),req.socket.remoteAddress,req.user,req.url)
+              // console.error('error reading file', pathname, Date.now(), req.socket.remoteAddress, req.user, req.url)
+							log.error('error reading file ' + logger.joinParams(pathname,Date.now(),req.socket.remoteAddress,req.user,req.url))
               res.statusCode = 500
               res.end('Something went wrong')
             } else {
@@ -205,7 +230,8 @@ let server = http.createServer(basic, (req, res) => {
         })
       } else {
 
-					console.error('should never happen!',Date.now(),req.socket.remoteAddress,req.user,req.url)
+          // console.error('should never happen!', Date.now(), req.socket.remoteAddress, req.user, req.url)
+					log.error('should never happen! ' + logger.joinParams(Date.now(),req.socket.remoteAddress,req.user,req.url))
           res.writeHead(302, {
                 "Location": "/index.html"
           });
@@ -220,4 +246,5 @@ try {
     console.log(`listening on port ${portListen} target ${portTarget}`)
 } catch (e) {
   console.error(e)
+  log.error(e.message)
 }

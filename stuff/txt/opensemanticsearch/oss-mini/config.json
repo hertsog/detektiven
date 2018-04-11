@@ -11,5 +11,6 @@
   "ipaBase": "cn=accounts,dc=example,dc=org",
   "ipaPass": "kalakala",
   "ipaUser": "webeid",
-  "ipaGroup": "sops"
+  "ipaGroup": "sops",
+  "logFile": "/var/log/oss-mini/error-%DATE%.log"
 }
