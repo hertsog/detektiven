@@ -135,7 +135,7 @@ proxy.on('proxyReq', function(proxyReq, req, res, options) {
   //console.log('proxy',Date.now(),req.socket.remoteAddress,req.user,req.url,JSON.stringify(req.headers['user-agent']))
 });
 proxy.on('proxyRes', function (proxyRes, req, res) {
-	if (proxyRes.statusCode != 200) {
+	if (proxyRes.statusCode != 200 && proxyRes.statusCode != 304) {
 		// TODO find where headers are sent before this and set content to undefined
 		proxyRes.statusCode = 418
     // console.error('proxy', proxyRes.statusMessage, req.socket.remoteAddress, req.user, req.url)
